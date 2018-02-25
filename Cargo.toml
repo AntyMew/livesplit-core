@@ -26,7 +26,7 @@ lto = true
 panic = "abort"
 
 [workspace]
-members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib"]
+members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", "capi/python"]
 
 [dependencies]
 base64 = "0.9.0"

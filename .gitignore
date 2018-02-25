@@ -8,7 +8,10 @@ capi/js/livesplit_core.wasm
 capi/js/node/livesplit_core.js
 capi/js/node/index.js
 capi/js/node/README.md
+capi/python/livesplit_core/livesplit_core.py
+capi/python/livesplit_core/lib/
 emscripten/target
 emscripten/Cargo.lock
 Cargo.lock
 **.rs.bk
+.vscode/
