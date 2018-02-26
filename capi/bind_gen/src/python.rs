@@ -222,12 +222,13 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
            r#"#!/usr/bin/env python3
 # coding: utf-8
 
-import sys, ctypes
+import sys, os, ctypes
 from ctypes import c_char_p, c_void_p, c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, c_size_t, c_float, c_double, c_bool, c_char, c_byte
 
-prefix = {'win32': ''}.get(sys.platform, './lib')
+directory = os.path.dirname(os.path.abspath(__file__)) + "/lib/"
+prefix = {'win32': ''}.get(sys.platform, 'lib')
 extension = {'darwin': '.dylib', 'win32': '.dll'}.get(sys.platform, '.so')
-livesplit_core_native = ctypes.cdll.LoadLibrary(prefix + "livesplit_core" + extension)
+livesplit_core_native = ctypes.cdll.LoadLibrary(directory + prefix + "livesplit_core" + extension)
 "#)?;
 
     for class in classes.values() {
