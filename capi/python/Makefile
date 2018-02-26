@@ -1,13 +1,13 @@
 BINDIR=livesplit_core
-TARGETS=lib/liblivesplit_core.so $(BINDIR)/livesplit_core.py
+TARGETS=$(BINDIR)/lib/liblivesplit_core.so $(BINDIR)/livesplit_core.py
 FLAGS=--release -p cdylib
 
 all: $(TARGETS)
 
-lib:
+$(BINDIR)/lib:
 	mkdir $@
 
-lib/liblivesplit_core.so: lib
+$(BINDIR)/lib/liblivesplit_core.so: $(BINDIR)/lib
 	@cargo build $(FLAGS)
 	@cp ../../target/release/$(notdir $@) $@
 
@@ -18,3 +18,9 @@ $(BINDIR)/livesplit_core.py:
 clean:
 	@cargo clean
 	@rm $(TARGETS)
+
+install: $(TARGETS)
+	@pip3 install .
+
+uninstall:
+	@pip3 uninstall livesplit-core
