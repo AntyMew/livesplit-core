@@ -18,6 +18,7 @@ mod typescript;
 mod wasm;
 
 use structopt::StructOpt;
+use std::env::current_exe;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
 use std::path::PathBuf;
@@ -27,6 +28,12 @@ use syn::{parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as S
 #[derive(StructOpt)]
 #[structopt(about = "Generates bindings for livesplit-core")]
 pub struct Opt {
+    #[structopt(short = "i", long = "input", help="The path to read the C API lib.rs from. \
+                If left as default, auto-detection is attempted.", default_value = "")]
+    input: String,
+    #[structopt(short = "o", long = "output", help = "The path to write the bindings to",
+                default_value = "")]
+    output: String,
     #[structopt(long = "ruby-lib-path", help = "The path of the library for the Ruby bindings",
                 default_value = "../liblivesplit_core.so")]
     ruby_lib_path: String,
@@ -132,8 +139,16 @@ fn get_type(ty: &SynType) -> Type {
 fn main() {
     let opt = Opt::from_args();
 
+    let path = if opt.input.is_empty() {
+        let mut path = current_exe().unwrap();
+        path.pop();
+        path.push("../../capi/src/lib.rs");
+        path
+    } else {
+        PathBuf::from(&opt.input)
+    };
     let mut contents = String::new();
-    File::open("../src/lib.rs")
+    File::open(&path)
         .unwrap()
         .read_to_string(&mut contents)
         .unwrap();
@@ -145,7 +160,7 @@ fn main() {
     for item in &file.items {
         if let &Item::Mod(ref module) = item {
             contents.clear();
-            File::open(format!("../src/{}.rs", module.ident))
+            File::open(path.with_file_name(format!("{}.rs", module.ident)))
                 .unwrap()
                 .read_to_string(&mut contents)
                 .unwrap();
@@ -288,8 +303,14 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
 }
 
 fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
-    let mut path = PathBuf::from("..");
-    path.push("bindings");
+    let mut path = if opt.output.is_empty() {
+        let mut path = current_exe().unwrap();
+        path.pop();
+        path.push("../../capi/bindings");
+        path
+    } else {
+        PathBuf::from(&opt.output)
+    };
 
     remove_dir_all(&path).ok();
     create_dir_all(&path)?;
