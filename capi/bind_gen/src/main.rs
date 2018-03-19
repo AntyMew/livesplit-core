@@ -18,6 +18,7 @@ mod typescript;
 mod wasm;
 
 use structopt::StructOpt;
+use std::collections::HashMap;
 use std::env::current_exe;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
@@ -28,12 +29,17 @@ use syn::{parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as S
 #[derive(StructOpt)]
 #[structopt(about = "Generates bindings for livesplit-core")]
 pub struct Opt {
+    #[structopt(name = "languages", help = "Languages to generate bindings for")]
+    languages: Vec<String>,
+    #[structopt(short = "a", long = "all", help = "Generate all bindings. Defaults to true if no \
+                languages are passed")]
+    all: bool,
     #[structopt(short = "i", long = "input", help="The path to read the C API lib.rs from. \
-                If left as default, auto-detection is attempted.", default_value = "")]
-    input: String,
+                If left as default, auto-detection is attempted.", parse(from_os_str))]
+    input: Option<PathBuf>,
     #[structopt(short = "o", long = "output", help = "The path to write the bindings to",
-                default_value = "")]
-    output: String,
+                parse(from_os_str))]
+    output: Option<PathBuf>,
     #[structopt(long = "ruby-lib-path", help = "The path of the library for the Ruby bindings",
                 default_value = "../liblivesplit_core.so")]
     ruby_lib_path: String,
@@ -139,13 +145,13 @@ fn get_type(ty: &SynType) -> Type {
 fn main() {
     let opt = Opt::from_args();
 
-    let path = if opt.input.is_empty() {
+    let path = if opt.input.is_some() {
+        opt.input.as_ref().unwrap().clone()
+    } else {
         let mut path = current_exe().unwrap();
         path.pop();
         path.push("../../capi/src/lib.rs");
         path
-    } else {
-        PathBuf::from(&opt.input)
     };
     let mut contents = String::new();
     File::open(&path)
@@ -303,87 +309,124 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
 }
 
 fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
-    let mut path = if opt.output.is_empty() {
+    let mut path = if opt.output.is_some() {
+        opt.output.as_ref().unwrap().clone()
+    } else {
         let mut path = current_exe().unwrap();
         path.pop();
         path.push("../../capi/bindings");
         path
-    } else {
-        PathBuf::from(&opt.output)
     };
+
+    let allowed_languages = ["emscripten", "node", "wasm", "csharp", "java", "kotlin", "ruby",
+        "c", "python", "swift"];
+
+    let list: Vec<String> = if opt.all || opt.languages.is_empty() {
+        allowed_languages.iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+    } else {
+        opt.languages.clone()
+    };
+
+    let mut languages: HashMap<&str, bool> = HashMap::new();
+    for language in &list {
+        // Problem: only adds if key does *not* exist yet
+        languages.entry(language.as_str()).or_insert(true);
+    }
 
     remove_dir_all(&path).ok();
     create_dir_all(&path)?;
 
-    path.push("emscripten");
-    create_dir_all(&path)?;
-    {
-        path.push("livesplit_core.js");
-        emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
-        path.pop();
+    if languages.get("emscripten").cloned().unwrap_or(false) {
+        path.push("emscripten");
+        create_dir_all(&path)?;
+        {
+            path.push("livesplit_core.js");
+            emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
+            path.pop();
 
-        path.push("livesplit_core.ts");
-        emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
-        path.pop();
-    }
-    path.pop();
-
-    path.push("node");
-    create_dir_all(&path)?;
-    {
-        path.push("livesplit_core.js");
-        node::write(BufWriter::new(File::create(&path)?), classes, false)?;
-        path.pop();
-
-        path.push("livesplit_core.ts");
-        node::write(BufWriter::new(File::create(&path)?), classes, true)?;
+            path.push("livesplit_core.ts");
+            emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
+            path.pop();
+        }
         path.pop();
     }
-    path.pop();
 
-    path.push("wasm");
-    create_dir_all(&path)?;
-    {
-        path.push("livesplit_core.js");
-        wasm::write(BufWriter::new(File::create(&path)?), classes, false)?;
-        path.pop();
+    if languages.get("node").cloned().unwrap_or(false) {
+        path.push("node");
+        create_dir_all(&path)?;
+        {
+            path.push("livesplit_core.js");
+            node::write(BufWriter::new(File::create(&path)?), classes, false)?;
+            path.pop();
 
-        path.push("livesplit_core.ts");
-        wasm::write(BufWriter::new(File::create(&path)?), classes, true)?;
+            path.push("livesplit_core.ts");
+            node::write(BufWriter::new(File::create(&path)?), classes, true)?;
+            path.pop();
+        }
         path.pop();
     }
-    path.pop();
 
-    path.push("LiveSplitCore.cs");
-    csharp::write(BufWriter::new(File::create(&path)?), classes)?;
-    path.pop();
+    if languages.get("wasm").cloned().unwrap_or(false) {
+        path.push("wasm");
+        create_dir_all(&path)?;
+        {
+            path.push("livesplit_core.js");
+            wasm::write(BufWriter::new(File::create(&path)?), classes, false)?;
+            path.pop();
 
-    path.push("java");
-    create_dir_all(&path)?;
-    java::write(&path, classes)?;
-    path.pop();
+            path.push("livesplit_core.ts");
+            wasm::write(BufWriter::new(File::create(&path)?), classes, true)?;
+            path.pop();
+        }
+        path.pop();
+    }
 
-    path.push("kotlin");
-    create_dir_all(&path)?;
-    kotlin::write(&path, classes)?;
-    path.pop();
+    if languages.get("csharp").cloned().unwrap_or(false) {
+        path.push("LiveSplitCore.cs");
+        csharp::write(BufWriter::new(File::create(&path)?), classes)?;
+        path.pop();
+    }
 
-    path.push("LiveSplitCore.rb");
-    ruby::write(BufWriter::new(File::create(&path)?), classes, opt)?;
-    path.pop();
+    if languages.get("java").cloned().unwrap_or(false) {
+        path.push("java");
+        create_dir_all(&path)?;
+        java::write(&path, classes)?;
+        path.pop();
+    }
 
-    path.push("livesplit_core.h");
-    c::write(BufWriter::new(File::create(&path)?), classes)?;
-    path.pop();
+    if languages.get("kotlin").cloned().unwrap_or(false) {
+        path.push("kotlin");
+        create_dir_all(&path)?;
+        kotlin::write(&path, classes)?;
+        path.pop();
+    }
 
-    path.push("livesplit_core.py");
-    python::write(BufWriter::new(File::create(&path)?), classes)?;
-    path.pop();
+    if languages.get("ruby").cloned().unwrap_or(false) {
+        path.push("LiveSplitCore.rb");
+        ruby::write(BufWriter::new(File::create(&path)?), classes, opt)?;
+        path.pop();
+    }
 
-    path.push("swift");
-    create_dir_all(&path)?;
-    swift::write(&path, classes)?;
-    path.pop();
+    if languages.get("c").cloned().unwrap_or(false) {
+        path.push("livesplit_core.h");
+        c::write(BufWriter::new(File::create(&path)?), classes)?;
+        path.pop();
+    }
+
+    if languages.get("python").cloned().unwrap_or(false) {
+        path.push("livesplit_core.py");
+        python::write(BufWriter::new(File::create(&path)?), classes)?;
+        path.pop();
+    }
+
+    if languages.get("swift").cloned().unwrap_or(false) {
+        path.push("swift");
+        create_dir_all(&path)?;
+        swift::write(&path, classes)?;
+        path.pop();
+    }
 
     Ok(())
 }
