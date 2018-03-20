@@ -2,7 +2,6 @@
 
 use livesplit_core::TimeSpan;
 use super::{acc, acc_mut, alloc, own_drop, str};
-use std::ops::{AddAssign, SubAssign};
 use std::os::raw::c_char;
 use std::ptr;
 use std::str::FromStr;
@@ -76,12 +75,47 @@ pub unsafe extern "C" fn TimeSpan_default() -> OwnedTimeSpan {
     alloc(TimeSpan::default())
 }
 
+/// Creates a new Time Span from the negation of this Time Span.
+pub unsafe extern "C" fn TimeSpan_neg(this: *const TimeSpan) -> OwnedTimeSpan {
+    alloc(-*acc(this))
+}
+
+/// Creates a new Time Span from the result of another Time Span subtracted
+/// from this Time Span.
+pub unsafe extern "C" fn TimeSpan_add(
+    this: *const TimeSpan,
+    rhs: *const TimeSpan,
+) -> OwnedTimeSpan {
+    alloc(*acc(this) + *acc(rhs))
+}
+
+/// Creates a new Time Span from the result of this Time Span added to another
+/// Time Span.
+pub unsafe extern "C" fn TimeSpan_sub(
+    this: *const TimeSpan,
+    rhs: *const TimeSpan,
+) -> OwnedTimeSpan {
+    alloc(*acc(this) - *acc(rhs))
+}
+
+/// Creates a new Time Span from the result of this Time Span multiplied by an
+/// integer.
+pub unsafe extern "C" fn TimeSpan_mul(this: *const TimeSpan, rhs: i32) -> OwnedTimeSpan {
+    alloc(*acc(this) * rhs)
+}
+
+/// Creates a new Time Span from the result of this Time Span divided by an
+/// integer.
+pub unsafe extern "C" fn TimeSpan_div(this: *const TimeSpan, rhs: i32) -> OwnedTimeSpan {
+    alloc(*acc(this) / rhs)
+}
+
 /// Add another Time Span to this mutable Time Span.
 pub unsafe extern "C" fn TimeSpan_add_assign(this: OwnedTimeSpan, rhs: *const TimeSpan) {
-    acc_mut(this).add_assign(*acc(rhs));
+    *acc_mut(this) += *acc(rhs)
 }
 
 /// Subtract another Time Span from this mutable Time Span.
 pub unsafe extern "C" fn TimeSpan_sub_assign(this: OwnedTimeSpan, rhs: *const TimeSpan) {
-    acc_mut(this).sub_assign(*acc(rhs));
+    *acc_mut(this) -= *acc(rhs)
 }

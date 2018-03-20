@@ -5,7 +5,7 @@ use std::num::ParseFloatError;
 use chrono::Duration;
 
 /// A Time Span represents a certain span of time.
-#[derive(From, Add, Sub, Neg, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(From, Add, Sub, Mul, Div, Neg, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {
