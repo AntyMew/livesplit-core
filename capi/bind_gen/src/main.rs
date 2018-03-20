@@ -315,30 +315,22 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
         let mut path = current_exe().unwrap();
         path.pop();
         path.push("../../capi/bindings");
+        remove_dir_all(&path).ok();
         path
     };
 
-    let allowed_languages = ["emscripten", "node", "wasm", "csharp", "java", "kotlin", "ruby",
-        "c", "python", "swift"];
+    let generate_all: bool = opt.all || opt.languages.is_empty();
+    let mut languages: HashMap<&str, bool> = HashMap::new();
 
-    let list: Vec<String> = if opt.all || opt.languages.is_empty() {
-        allowed_languages.iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<String>>()
-    } else {
-        opt.languages.clone()
+    if !generate_all {
+        for language in &opt.languages {
+            languages.entry(language.as_str()).or_insert(true);
+        }
     };
 
-    let mut languages: HashMap<&str, bool> = HashMap::new();
-    for language in &list {
-        // Problem: only adds if key does *not* exist yet
-        languages.entry(language.as_str()).or_insert(true);
-    }
-
-    remove_dir_all(&path).ok();
     create_dir_all(&path)?;
 
-    if languages.get("emscripten").cloned().unwrap_or(false) {
+    if languages.get("emscripten").cloned().unwrap_or(generate_all) {
         path.push("emscripten");
         create_dir_all(&path)?;
         {
@@ -353,7 +345,7 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
         path.pop();
     }
 
-    if languages.get("node").cloned().unwrap_or(false) {
+    if languages.get("node").cloned().unwrap_or(generate_all) {
         path.push("node");
         create_dir_all(&path)?;
         {
@@ -368,7 +360,7 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
         path.pop();
     }
 
-    if languages.get("wasm").cloned().unwrap_or(false) {
+    if languages.get("wasm").cloned().unwrap_or(generate_all) {
         path.push("wasm");
         create_dir_all(&path)?;
         {
@@ -383,45 +375,45 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
         path.pop();
     }
 
-    if languages.get("csharp").cloned().unwrap_or(false) {
+    if languages.get("csharp").cloned().unwrap_or(generate_all) {
         path.push("LiveSplitCore.cs");
         csharp::write(BufWriter::new(File::create(&path)?), classes)?;
         path.pop();
     }
 
-    if languages.get("java").cloned().unwrap_or(false) {
+    if languages.get("java").cloned().unwrap_or(generate_all) {
         path.push("java");
         create_dir_all(&path)?;
         java::write(&path, classes)?;
         path.pop();
     }
 
-    if languages.get("kotlin").cloned().unwrap_or(false) {
+    if languages.get("kotlin").cloned().unwrap_or(generate_all) {
         path.push("kotlin");
         create_dir_all(&path)?;
         kotlin::write(&path, classes)?;
         path.pop();
     }
 
-    if languages.get("ruby").cloned().unwrap_or(false) {
+    if languages.get("ruby").cloned().unwrap_or(generate_all) {
         path.push("LiveSplitCore.rb");
         ruby::write(BufWriter::new(File::create(&path)?), classes, opt)?;
         path.pop();
     }
 
-    if languages.get("c").cloned().unwrap_or(false) {
+    if languages.get("c").cloned().unwrap_or(generate_all) {
         path.push("livesplit_core.h");
         c::write(BufWriter::new(File::create(&path)?), classes)?;
         path.pop();
     }
 
-    if languages.get("python").cloned().unwrap_or(false) {
+    if languages.get("python").cloned().unwrap_or(generate_all) {
         path.push("livesplit_core.py");
         python::write(BufWriter::new(File::create(&path)?), classes)?;
         path.pop();
     }
 
-    if languages.get("swift").cloned().unwrap_or(false) {
+    if languages.get("swift").cloned().unwrap_or(generate_all) {
         path.push("swift");
         create_dir_all(&path)?;
         swift::write(&path, classes)?;
