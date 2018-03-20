@@ -42,6 +42,7 @@ pub unsafe extern "C" fn TimeSpan_from_seconds(seconds: f64) -> OwnedTimeSpan {
 }
 
 /// Creates a new Time Span from a given amount of days.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_from_days(days: f64) -> OwnedTimeSpan {
     alloc(TimeSpan::from_days(days))
 }
@@ -55,12 +56,14 @@ pub unsafe extern "C" fn TimeSpan_total_seconds(this: *const TimeSpan) -> f64 {
 
 /// Returns the total amount of milliseconds (including decimals) this Time
 /// Span represents.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_total_milliseconds(this: *const TimeSpan) -> f64 {
     acc(this).total_milliseconds()
 }
 
 /// Creates a new Time Span from a string. Returns <NULL> if the string could
 /// not be parsed.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_from_str(text: *const c_char) -> OwnedTimeSpan {
     if let Ok(time_span) = TimeSpan::from_str(str(text)) {
         alloc(time_span)
@@ -76,12 +79,14 @@ pub unsafe extern "C" fn TimeSpan_default() -> OwnedTimeSpan {
 }
 
 /// Creates a new Time Span from the negation of this Time Span.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_neg(this: *const TimeSpan) -> OwnedTimeSpan {
     alloc(-*acc(this))
 }
 
 /// Creates a new Time Span from the result of another Time Span subtracted
 /// from this Time Span.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_add(
     this: *const TimeSpan,
     rhs: *const TimeSpan,
@@ -91,6 +96,7 @@ pub unsafe extern "C" fn TimeSpan_add(
 
 /// Creates a new Time Span from the result of this Time Span added to another
 /// Time Span.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_sub(
     this: *const TimeSpan,
     rhs: *const TimeSpan,
@@ -100,22 +106,26 @@ pub unsafe extern "C" fn TimeSpan_sub(
 
 /// Creates a new Time Span from the result of this Time Span multiplied by an
 /// integer.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_mul(this: *const TimeSpan, rhs: i32) -> OwnedTimeSpan {
     alloc(*acc(this) * rhs)
 }
 
 /// Creates a new Time Span from the result of this Time Span divided by an
 /// integer.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_div(this: *const TimeSpan, rhs: i32) -> OwnedTimeSpan {
     alloc(*acc(this) / rhs)
 }
 
 /// Add another Time Span to this mutable Time Span.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_add_assign(this: *mut TimeSpan, rhs: *const TimeSpan) {
     *acc_mut(this) += *acc(rhs)
 }
 
 /// Subtract another Time Span from this mutable Time Span.
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_sub_assign(this: *mut TimeSpan, rhs: *const TimeSpan) {
     *acc_mut(this) -= *acc(rhs)
 }
