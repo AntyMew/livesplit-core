@@ -111,11 +111,11 @@ pub unsafe extern "C" fn TimeSpan_div(this: *const TimeSpan, rhs: i32) -> OwnedT
 }
 
 /// Add another Time Span to this mutable Time Span.
-pub unsafe extern "C" fn TimeSpan_add_assign(this: OwnedTimeSpan, rhs: *const TimeSpan) {
+pub unsafe extern "C" fn TimeSpan_add_assign(this: *mut TimeSpan, rhs: *const TimeSpan) {
     *acc_mut(this) += *acc(rhs)
 }
 
 /// Subtract another Time Span from this mutable Time Span.
-pub unsafe extern "C" fn TimeSpan_sub_assign(this: OwnedTimeSpan, rhs: *const TimeSpan) {
+pub unsafe extern "C" fn TimeSpan_sub_assign(this: *mut TimeSpan, rhs: *const TimeSpan) {
     *acc_mut(this) -= *acc(rhs)
 }
