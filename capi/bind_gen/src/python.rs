@@ -161,7 +161,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "self.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.ptr", name)
+                if typ.is_nullable {
+                    format!("{}.ptr", name)
+                } else {
+                    format!("None if {0} is None else {0}.ptr", name)
+                }
             } else if typ.name == "c_char" {
                 format!("{}.encode()", name)
             } else {

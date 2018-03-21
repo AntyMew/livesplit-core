@@ -195,7 +195,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "self.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                if typ.is_nullable {
+                    format!("{}.ptr", name.to_mixed_case())
+                } else {
+                    format!("{0} == nil ? Optional.none : {0}.ptr", name.to_mixed_case())
+                }
             } else if ty_name == "Bool" {
                 format!("{} ? 1 : 0", name.to_mixed_case())
             } else {

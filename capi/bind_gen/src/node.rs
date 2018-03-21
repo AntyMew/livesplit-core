@@ -236,7 +236,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             } else if typ.name == "Json" {
                 format!("JSON.stringify({})", name.to_mixed_case())
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                if typ.is_nullable {
+                    format!("{}.ptr", name.to_mixed_case())
+                } else {
+                    format!("{0} === null ? ref.NULL : {0}.ptr", name.to_mixed_case())
+                }
             } else {
                 name.to_mixed_case()
             }

@@ -204,7 +204,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             } else if ty_name == "UIntPtr" {
                 format!("(UIntPtr){}", name.to_mixed_case())
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                if typ.is_nullable {
+                    format!("{}.ptr", name.to_mixed_case())
+                } else {
+                    format!("{0} == null ? IntPtr.Zero : {0}.ptr", name.to_mixed_case())
+                }
             } else {
                 name.to_mixed_case()
             }

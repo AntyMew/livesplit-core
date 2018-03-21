@@ -198,7 +198,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "@handle.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.handle.ptr", name)
+                if typ.is_nullable {
+                    format!("{}.handle.ptr", name)
+                } else {
+                    format!("{0} == nil ? nil : {0}.handle.ptr", name)
+                }
             } else {
                 name.to_string()
             }
