@@ -1,7 +1,7 @@
 //! A time that can store a Real Time and a Game Time. Both of them are
 //! optional.
 
-use livesplit_core::{Time, TimingMethod, TimeSpan};
+use livesplit_core::{Time, TimingMethod};
 use super::{acc, acc_mut, alloc, own_drop};
 use std::ptr;
 use time_span::{NullableTimeSpan};

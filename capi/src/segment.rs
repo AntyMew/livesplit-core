@@ -7,6 +7,8 @@ use super::{acc, alloc, output_str, output_time, own_drop, str};
 use std::os::raw::c_char;
 
 /// type
+pub type NullableSegment = Segment;
+/// type
 pub type OwnedSegment = *mut Segment;
 
 /// Creates a new Segment with the name given.

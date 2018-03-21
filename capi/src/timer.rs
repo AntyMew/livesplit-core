@@ -5,6 +5,7 @@ use super::{acc, acc_mut, alloc, output_str, output_time, output_time_span, outp
             own_drop};
 use livesplit_core::run::saver;
 use run::{NullableOwnedRun, OwnedRun};
+use segment::{NullableSegment};
 use std::os::raw::c_char;
 use shared_timer::OwnedSharedTimer;
 use std::ptr;
@@ -293,4 +294,25 @@ pub unsafe extern "C" fn Timer_print_debug(this: *const Timer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_current_time(this: *const Timer) -> *const Time {
     output_time(acc(this).current_time())
+}
+
+/// Accesses the split the attempt is currently on. If there's no attempt in
+/// progress or the run finished, <NULL> is returned instead
+#[no_mangle]
+pub unsafe extern "C" fn Timer_current_split(this: *const Timer) -> *const NullableSegment {
+    acc(this)
+        .current_split()
+        .map(|t| t as *const _)
+        .unwrap_or_else(ptr::null)
+}
+
+/// Accesses the index of the split the attempt is currently on. If there's
+/// no attempt in progress, 0 is returned instead.
+#[no_mangle]
+pub unsafe extern "C" fn Timer_current_split_index(this: *const Timer) -> usize {
+    if let Some(index) = acc(this).current_split_index() {
+        index
+    } else {
+        0
+    }
 }
