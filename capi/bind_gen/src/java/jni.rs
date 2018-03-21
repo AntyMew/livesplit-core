@@ -139,11 +139,15 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if typ.is_custom {
             write!(
                 writer,
-                r#"if ({name}.ptr == 0) {{
+                r#"if ({cond}) {{
             throw new RuntimeException();
         }}
         "#,
-                name = name.to_mixed_case()
+                cond = if typ.is_nullable {
+                    format!("{0} != null && {0}.ptr == 0", name.to_mixed_case())
+                } else {
+                    format!("{}.ptr == 0", name.to_mixed_case())
+                }
             )?;
         }
     }

@@ -161,14 +161,19 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
+            let name = if name == "this" {
+                "self".to_string()
+            } else {
+                name.to_mixed_case()
+            };
             write!(
                 writer,
-                r#"assert({name}.ptr != Optional.none)
+                r#"assert({cond})
         "#,
-                name = if name == "this" {
-                    "self".to_string()
+                cond = if typ.is_nullable {
+                    format!("{0} == nil || {0}.ptr != Optional.none", name)
                 } else {
-                    name.to_mixed_case()
+                    format!("{}.ptr != Optional.none", name)
                 }
             )?;
         }

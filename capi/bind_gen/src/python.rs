@@ -133,9 +133,14 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if typ.is_custom {
             write!(
                 writer,
-                r#"if {name}.ptr == None:
+                r#"if {cond}:
             raise Exception("{name} is disposed")
         "#,
+                cond = if typ.is_nullable {
+                    format!("{0} != None and {0}.ptr == None", map_var(name))
+                } else {
+                    format!("{}.ptr == None", map_var(name))
+                },
                 name = map_var(name)
             )?;
         }
@@ -162,9 +167,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                 "self.ptr".to_string()
             } else if typ.is_custom {
                 if typ.is_nullable {
-                    format!("{}.ptr", name)
-                } else {
                     format!("None if {0} is None else {0}.ptr", name)
+                } else {
+                    format!("{}.ptr", name)
                 }
             } else if typ.name == "c_char" {
                 format!("{}.encode()", name)

@@ -168,12 +168,16 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if typ.is_custom {
             write!(
                 writer,
-                r#"if {ptr} == nil
+                r#"if {cond}
                 raise "{name} is disposed"
             end
             "#,
-                name = name,
-                ptr = ptr_of(name)
+                cond = if typ.is_nullable {
+                    format!("{} != nil && {} == nil", name, ptr_of(name))
+                } else {
+                    format!("{} == nil", ptr_of(name))
+                },
+                name = name
             )?;
         }
     }

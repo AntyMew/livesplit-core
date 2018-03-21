@@ -201,10 +201,15 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         if typ.is_custom {
             write!(
                 writer,
-                r#"if (ref.isNull({name}.ptr)) {{
+                r#"if ({cond}) {{
             throw "{name} is disposed";
         }}
         "#,
+                cond = if typ.is_nullable {
+                    format!("{0} !== null && ref.isNull({0}.ptr)", name.to_mixed_case())
+                } else {
+                    format!("ref.isNull({}.ptr)", name.to_mixed_case())
+                },
                 name = name.to_mixed_case()
             )?;
         }
