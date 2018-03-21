@@ -19,7 +19,6 @@ mod wasm;
 
 use structopt::StructOpt;
 use std::collections::HashMap;
-use std::env::current_exe;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
 use std::path::PathBuf;
@@ -148,9 +147,9 @@ fn main() {
     let path = if opt.input.is_some() {
         opt.input.as_ref().unwrap().clone()
     } else {
-        let mut path = current_exe().unwrap();
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.pop();
-        path.push("../../capi/src/lib.rs");
+        path.push("../capi/src/lib.rs");
         path
     };
     let mut contents = String::new();
@@ -312,7 +311,7 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     let mut path = if opt.output.is_some() {
         opt.output.as_ref().unwrap().clone()
     } else {
-        let mut path = current_exe().unwrap();
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.pop();
         path.push("../../capi/bindings");
         remove_dir_all(&path).ok();
